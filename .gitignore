@@ -1,0 +1,7 @@
+# Local QA output, browser profiles, and backup archives
+verification/
+node_modules/
+*.zip
+*.tmp
+.env
+.env.*

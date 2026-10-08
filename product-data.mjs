@@ -1,0 +1,318 @@
+import fs from 'node:fs';
+import { partnerContent, solutions, sources } from './portfolio-data.mjs';
+
+export const productReviewDate = '2026-10-05';
+// One identity per distinct offering. Repeated solution cards resolve through offeringKey.
+// PDF filenames are existing files, not generated or inferred at render time.
+const definitions = [
+  {
+    id:'sophos-endpoint', partner:'sophos', index:0, pdf:'sophos-endpoint',
+    intro:'A laptop that leaves the office still needs protection. Sophos Endpoint is an option for businesses reviewing malware and ransomware controls across employee computers. Decide whether your purchase also needs investigation tools, server protection or a separately scoped response service.',
+    problems:['Malicious files or exploit attempts reaching work devices.', 'An endpoint refresh that must coexist with business applications and current agents.'],
+    suitable:'Consider it when endpoint prevention is the immediate gap and you can nominate someone to review device health and detections.',
+    capabilities:['Malware prevention and exploit mitigation on supported devices.', 'CryptoGuard ransomware protection.', 'Application, web and peripheral controls; availability varies by platform.'],
+    limitations:['No endpoint product guarantees that every attack will be stopped or every file recovered.', 'Endpoint, EDR, XDR, server and MDR scopes must be checked separately against the quoted entitlement.'],
+    how:['Install the supported agent and assign a pilot policy.', 'The agent evaluates files and activity against the configured protections.', 'Review detections and exclusions before expanding to the remaining device groups.'],
+    platform:'Check exact OS versions and feature differences before selecting workstation and server coverage.',
+    integration:'Test existing antivirus, management agents and any proposed Sophos ecosystem integration rather than assuming coexistence.',
+    licensing:'List workstations, servers, subscription term and any EDR or managed-service entitlement separately.',
+    budget:'Covered devices, server scope, subscription level, agent migration and the agreed operational support.',
+    evaluate:'Test representative applications, remote-device connectivity and a safe detection exercise. Record exclusions and alert ownership.',
+    faqs:[['Does ransomware protection replace backup?','No. Keep a tested recovery plan for deletion, corruption and incidents that endpoint controls cannot prevent.'],['Do all computers get the same controls?','Feature availability differs by OS. Ask for the supported-platform matrix for the exact proposed edition.']],
+    alternatives:['crowdstrike-falcon-prevent','crowdstrike-falcon-insight-xdr']
+  },
+  {
+    id:'sophos-firewall', partner:'sophos', index:1, pdf:'sophos-firewall',
+    intro:'A firewall refresh should start with the applications your sites must reach and the traffic you need to inspect. Sophos Firewall provides network controls for that boundary. Choose the deployment and subscription around measured traffic, resilience and the team maintaining the policy.',
+    problems:['Broad network access that needs clearer segmentation and traffic rules.', 'An existing firewall that cannot meet the intended inspection workload.'],
+    suitable:'Consider it for a branch or network refresh where routing, application flows and change windows can be documented.',
+    capabilities:['Network traffic inspection and security policy enforcement.', 'Threat-feed-driven response and coordination with supported Sophos products.', 'Centralized management options for the firewall estate.'],
+    limitations:['Performance depends on inspection, encrypted traffic, sessions and the selected model.', 'A firewall does not protect data or devices whose traffic bypasses its enforcement path.'],
+    how:['Place the firewall in the agreed traffic path and configure routing.', 'Apply rules and the licensed inspection services to allowed traffic.', 'Review logs, tune exceptions and test failover where a resilience pair is proposed.'],
+    platform:'Confirm appliance, virtual or cloud suitability, interface requirements and supported deployment versions with the vendor specifications.',
+    integration:'Check switching, routing, identity, VPN peers and logging. Test any coordinated response against the licences you actually own.',
+    licensing:'Separate the appliance or software licence, security subscriptions, management and support.',
+    budget:'Inspected throughput, interfaces, redundancy, security subscriptions, log storage and policy migration.',
+    evaluate:'Use real application flows with the intended inspection enabled; test rollback and any planned failover.',
+    faqs:[['Can I size it using internet speed alone?','No. Include encrypted inspection, concurrent traffic, application mix and growth.'],['Does buying two appliances complete high availability?','No. Define connectivity, configuration, licensing and the failover test as part of the design.']],
+    alternatives:['palo-alto-networks-ngfw']
+  },
+  {
+    id:'palo-alto-networks-ngfw', partner:'palo-alto-networks', index:0, pdf:'palo-alto-networks-ngfw', name:'Palo Alto Networks NGFW',
+    intro:'Palo Alto Networks next-generation firewalls are an option when you need application-aware controls between offices, data centres or cloud workloads. Build the shortlist around the traffic path and inspection requirement, then compare equivalent subscriptions and management designs.',
+    problems:['Rules based only on ports that do not express the required application access.', 'Network boundaries that need inspection, user context and auditable policy changes.'],
+    suitable:'Consider it when application-aware policy is a priority and your team can maintain routing, identity and inspection exceptions.',
+    capabilities:['App-ID identifies applications for policy decisions.', 'User-ID adds identity context to network rules.', 'SSL/TLS decryption and individual or centralized management options.'],
+    limitations:['Encrypted inspection needs certificate planning and exceptions for incompatible applications.', 'Threat services, management and logging must be matched to the proposed subscriptions.'],
+    how:['Identify the networks, applications and user groups crossing the boundary.', 'The firewall identifies traffic and evaluates it against the configured policy.', 'Administrators use logs to adjust rules and validate application access.'],
+    platform:'Compare hardware and software form factors against workload location, interfaces and capacity; check the chosen release support matrix.',
+    integration:'Validate User-ID sources, routing, VPN interoperability and Panorama or Strata Cloud Manager requirements.',
+    licensing:'Name the form factor, model, security services, management, logging and support in the quote.',
+    budget:'Inspection load, appliance or software size, resilience, subscription scope, logging and migration effort.',
+    evaluate:'Pilot critical applications and certificate exceptions. Measure performance with the policies and subscriptions planned for production.',
+    faqs:[['Why compare application rules rather than only port rules?','App-ID provides application context. Use that context to express permitted business traffic and validate the resulting policy.'],['Is decryption suitable for every application?','No. Privacy requirements, certificate behaviour and application compatibility need review before enabling it.']],
+    alternatives:['sophos-firewall']
+  },
+  {
+    id:'palo-alto-prisma-access', partner:'palo-alto-networks', index:1, pdf:'palo-alto-prisma-access',
+    intro:'Prisma Access delivers security from the cloud for mobile users and remote networks. It is relevant when users need consistent access to internet, SaaS and internal resources from several locations. Define those access paths before deciding which services to order.',
+    problems:['Remote users and branches following inconsistent security policies.', 'Access designs that depend on routing all users through a single site.'],
+    suitable:'Consider it for a distributed workforce when identity, application locations and branch connectivity can be mapped.',
+    capabilities:['Cloud-delivered inspection for mobile users and remote networks.', 'Application policy, threat prevention and URL filtering in the documented service.', 'Service connections and private-application connectivity options subject to licensing.'],
+    limitations:['Connectivity and application experience depend on user location and network paths.', 'A mobile-user subscription does not automatically establish every branch or private-application entitlement.'],
+    how:['Onboard user traffic and branch connections through supported access methods.', 'Cloud enforcement applies your configured security policies.', 'Connect permitted internal resources and review centralized logs and application experience.'],
+    platform:'Check supported clients, branch connection methods, regions and management mode for your deployment.',
+    integration:'Review identity, DNS, routing, internal service connections and existing VPN transitions.',
+    licensing:'Identify mobile users, remote networks, capacity, logging and any service-connection or connector requirements.',
+    budget:'Users, branch capacity, service scope, log retention, client rollout and application onboarding.',
+    evaluate:'Test authentication and critical applications from actual user and branch locations, including fallback during migration.',
+    faqs:[['Is it simply a private-application VPN?','Its documented scope also includes internet and SaaS security. Compare the exact required scope with a private-access-only approach.'],['Can internal applications be reached immediately after ordering?','They still need the appropriate connectivity, policy and licensing configuration. Include that work in the proposal.']],
+    alternatives:['netskope-one-private-access','palo-alto-networks-ngfw']
+  },
+  {
+    id:'crowdstrike-falcon-prevent', partner:'crowdstrike', index:0, pdf:'crowdstrike-endpoint-security',
+    name:'CrowdStrike Falcon Prevent',
+    references:[['CrowdStrike endpoint security','https://www.crowdstrike.com/en-us/platform/endpoint-security/'],['Falcon Prevent and package overview','https://go.crowdstrike.com/buy-falcon']],
+    intro:'Falcon Prevent is the prevention offering within CrowdStrike endpoint security. It is a starting point for a business replacing antivirus or reviewing protection for distributed computers. Keep the prevention purchase distinct from investigation modules and any managed response service.',
+    problems:['Malicious activity on work devices that requires endpoint prevention.', 'An antivirus renewal that needs a planned agent replacement and compatibility pilot.'],
+    suitable:'Consider it when prevention is the immediate requirement and your team can administer policies and review detections.',
+    capabilities:['Next-generation antivirus on the Falcon platform.', 'A sensor-based deployment with cloud administration.', 'Endpoint threat prevention within the selected Falcon package.'],
+    limitations:['Prevention is different from the full investigation and response scope of Falcon Insight XDR.', 'OS coverage, additional controls and managed services depend on the proposed package.'],
+    how:['Deploy the eligible Falcon sensor to pilot devices.', 'Set prevention policies for the agreed device groups.', 'Review detections, tune permitted applications and expand coverage after acceptance.'],
+    platform:'Check supported workstation and server OS versions, deployment permissions and connectivity requirements.',
+    integration:'Evaluate existing agents, identity administration and any required alert export before replacement.',
+    licensing:'Request named Falcon modules, covered devices and subscription term; do not infer all capabilities from a bundle name.',
+    budget:'Endpoint and server counts, chosen package, integration work, migration and separately scoped support.',
+    evaluate:'Validate coverage, business application behaviour and the process for handling a test detection.',
+    faqs:[['Is this the same offering as Falcon Insight XDR?','No. Prevent addresses prevention; Insight XDR addresses detection, investigation and response. A proposed bundle may combine them.'],['Does the licence provide ITSIPL incident response?','Only expressly agreed services are included. Ask who handles detections and how escalation works.']],
+    alternatives:['sophos-endpoint','crowdstrike-falcon-insight-xdr']
+  },
+  {
+    id:'crowdstrike-falcon-insight-xdr', partner:'crowdstrike', index:1, pdf:'crowdstrike-endpoint-security',
+    name:'CrowdStrike Falcon Insight XDR',
+    references:[['Falcon Insight XDR','https://www.crowdstrike.com/en-us/platform/endpoint-security/falcon-insight-xdr/']],
+    intro:'Falcon Insight XDR helps a security team investigate suspicious endpoint activity and take response actions. It addresses a different buying question from basic antivirus: who needs investigation context, what actions may they take, and what data should be available when an incident occurs?',
+    problems:['Detections without enough endpoint context for investigation.', 'A response process that cannot clearly assign containment decisions.'],
+    suitable:'Consider it when there is a named investigation owner or a separately contracted service to act on detections.',
+    capabilities:['Endpoint detection and response with contextual threat information.', 'Investigation visibility into endpoint activity.', 'Real Time Response and workflow automation; confirm the selected entitlements.'],
+    limitations:['A detection tool still needs an operating process and authorized responders.', 'Additional platform telemetry, retention and managed services must be confirmed rather than assumed.'],
+    how:['Collect endpoint telemetry from supported Falcon sensors.', 'Analysts investigate detections and the surrounding activity.', 'Authorized responders use the licensed response tools and document the outcome.'],
+    platform:'Validate OS versions, sensor eligibility, administrative permissions and telemetry connectivity.',
+    integration:'List required identity, cloud or third-party data sources and confirm connectors, permissions and licensing.',
+    licensing:'Name Insight XDR, any accompanying prevention module, retention requirements and vendor or ITSIPL services separately.',
+    budget:'Covered endpoints, investigation modules, data retention, connectors and the people or service operating the tools.',
+    evaluate:'Run a safe investigation exercise from detection to approved response and verify the required evidence is retained.',
+    faqs:[['Can I buy EDR without assigning an investigation owner?','A licence alone does not establish who investigates or authorizes response. Decide that responsibility before rollout.'],['Does XDR mean every data source is included?','No. Identify the specific telemetry sources, connectors and entitlements required for your environment.']],
+    alternatives:['sophos-endpoint','crowdstrike-falcon-prevent']
+  },
+  {
+    id:'manageengine-endpoint-central', partner:'manageengine', index:0, pdf:'manageengine-endpoint-central',
+    name:'ManageEngine Endpoint Central',
+    intro:'Endpoint Central helps IT teams organize device administration rather than manage each computer separately. It is relevant when patching, software rollout and inventory have become inconsistent. Start with those operational tasks and choose the edition and optional security capabilities that meet your scope.',
+    problems:['Inconsistent patching and repeated manual software installation.', 'Incomplete visibility into devices and installed software.'],
+    suitable:'Consider it for an IT team managing a mixed or distributed device estate with defined change and maintenance windows.',
+    capabilities:['Patch deployment for supported operating systems and applications.', 'Software distribution and hardware/software inventory.', 'Remote troubleshooting and configuration-management capabilities.'],
+    limitations:['A feature listed in the platform portfolio is not necessarily included in every edition.', 'Successful deployment of a patch does not prove every application remains compatible.'],
+    how:['Enroll eligible devices and establish inventory.', 'Schedule approved patches and software tasks for pilot groups.', 'Review results, troubleshoot exceptions and expand the rollout in stages.'],
+    platform:'Check supported OS versions and per-platform features. Compare cloud and on-premises options for your estate.',
+    integration:'Review remote-site connectivity, device credentials and integrations with your service-desk process.',
+    licensing:'Confirm managed-device categories, edition, security add-ons and any on-premises infrastructure requirements.',
+    budget:'Managed device counts, edition, add-ons, distribution infrastructure and deployment/support effort.',
+    evaluate:'Pilot patching, software installation and inventory on representative devices; agree rollback and maintenance windows.',
+    faqs:[['Does it replace endpoint antivirus?','Choose the quoted capabilities explicitly. Device administration alone is not the same requirement as endpoint threat protection.'],['Can we keep our existing service desk?','Review the specific integration and workflow. A device-management purchase need not force replacement of a working service desk.']],
+    alternatives:['sophos-endpoint','manageengine-opmanager','manageengine-servicedesk-plus'],
+    alternativeNote:'These are complementary tools for different jobs: endpoint protection, monitoring and service requests. None is a like-for-like replacement for device administration.'
+  },
+  {
+    id:'manageengine-endpoint-dlp-plus', partner:'manageengine', index:1, pdf:'manageengine-endpoint-dlp-plus',
+    name:'ManageEngine Endpoint DLP Plus',
+    intro:'Endpoint DLP Plus is an option when sensitive files on employee computers need discovery, classification and transfer controls. Define the approved ways those files may be used before introducing blocking rules, so ordinary work has an agreed exception process.',
+    problems:['Sensitive files copied or uploaded from managed computers without clear controls.', 'Uncertainty about where confidential endpoint data resides.'],
+    suitable:'Consider it for an endpoint-focused leakage requirement with device ownership and policy reviewers identified.',
+    capabilities:['Sensitive-data discovery and rule-based content detection.', 'File classification and transfer monitoring.', 'Controls for supported USB, web-upload, clipboard and print activities.'],
+    limitations:['Endpoint enforcement does not automatically cover all cloud-to-cloud or unmanaged-device activity.', 'Exact OS, application, file and channel support must be checked for the proposed release.'],
+    how:['Deploy supported endpoint controls and discover relevant files.', 'Classify data and observe transfers against pilot rules.', 'Tune exceptions and enable agreed restrictions on the selected channels.'],
+    platform:'Verify supported endpoint OS versions and the channel support matrix rather than assuming uniform controls.',
+    integration:'Check existing agents, trusted applications, business file sources and incident handling.',
+    licensing:'Identify endpoint counts, edition, term and required components; confirm hosting and entitlement details.',
+    budget:'Protected endpoints, required controls, deployment infrastructure, policy tuning and incident-review effort.',
+    evaluate:'Use non-confidential sample files to test classification, USB and uploads; measure false positives before blocking.',
+    faqs:[['Will it protect every SaaS transfer?','Not automatically. Map where the transfer occurs and confirm whether the endpoint control can inspect that path.'],['Should all confidential files be blocked immediately?','Begin with agreed business rules and a monitored pilot. Validate exceptions and false positives before enforcing broadly.']],
+    alternatives:['forcepoint-dlp','netskope-one-dlp']
+  },
+  {
+    id:'manageengine-opmanager', partner:'manageengine', index:2, pdf:'manageengine-opmanager',
+    name:'ManageEngine OpManager',
+    intro:'OpManager gives an operations team visibility into network and server availability and performance. It helps when outages are discovered by users or troubleshooting starts without a current view of device health. Define who acts on an alert as carefully as what is monitored.',
+    problems:['Slow or unavailable infrastructure discovered too late.', 'Several teams troubleshooting without a shared view of device health.'],
+    suitable:'Consider it when you can list the devices and services to monitor and nominate an owner for each alert route.',
+    capabilities:['Network-device health, availability and performance monitoring.', 'Physical and virtual server monitoring.', 'Fault alarms and network visualization for the monitored estate.'],
+    limitations:['An alert does not itself restore a failed application or add capacity.', 'Specialized monitoring and distributed deployment needs must be matched to edition and add-ons.'],
+    how:['Discover the agreed devices and configure access for monitoring.', 'Collect status and performance measurements against chosen thresholds.', 'Route alarms to the responsible team and use history to investigate recurring issues.'],
+    platform:'Check device models, server versions, monitoring access and the supported deployment architecture.',
+    integration:'Plan alert routing, escalation, service-desk handoff and any existing monitoring overlap.',
+    licensing:'Count monitored devices and confirm edition, probes, add-ons and deployment infrastructure.',
+    budget:'Monitored estate, distributed sites, selected modules, hosting and the work needed to tune meaningful alerts.',
+    evaluate:'Test discovery and a controlled outage, verify alert delivery and remove thresholds that generate noise.',
+    faqs:[['Does monitoring repair an outage?','Monitoring provides evidence and alarms. Remediation ownership and any automation need a separate agreed process.'],['Is device inventory enough to prepare a quote?','Also identify locations, access methods, services to watch and the team handling escalation.']],
+    alternatives:['manageengine-endpoint-central','manageengine-servicedesk-plus'],
+    alternativeNote:'These address administration and service workflow, not equivalent infrastructure monitoring. Combine them only if those additional tasks are required.'
+  },
+  {
+    id:'manageengine-servicedesk-plus', partner:'manageengine', index:3, pdf:'manageengine-servicedesk-plus',
+    name:'ManageEngine ServiceDesk Plus',
+    intro:'ServiceDesk Plus organizes requests and incidents into an accountable service workflow. It is relevant when support work is scattered across email or chat. Choose an edition around your actual ticket, asset and change processes rather than purchasing every available feature.',
+    problems:['Requests without a clear owner, history or escalation path.', 'Asset and change records maintained separately from the support process.'],
+    suitable:'Consider it when your team can define ticket categories, technicians, approvals and service reporting requirements.',
+    capabilities:['Ticket handling, self-service and service reporting.', 'Professional edition includes IT asset-management capabilities.', 'Enterprise edition adds broader service workflows including change enablement.'],
+    limitations:['Installing a service desk does not establish a staffed helpdesk or an ITSIPL response commitment.', 'Edition and deployment choices affect available workflows and integrations.'],
+    how:['Configure request categories, intake and technician assignments.', 'Track each ticket through the agreed workflow and approvals.', 'Use reporting to review queues, recurring issues and process improvements.'],
+    platform:'Compare cloud and on-premises availability, hosting, backup and administrator requirements for your chosen edition.',
+    integration:'Validate email, identity, asset discovery and links to existing device or monitoring tools.',
+    licensing:'Confirm technician and asset metrics, edition, optional components and subscription or maintenance terms.',
+    budget:'Technicians, assets, selected edition, hosting, data migration and workflow configuration.',
+    evaluate:'Test a request from intake to closure, an approval workflow and the reports your service owner actually needs.',
+    faqs:[['Must I buy asset and change features for ticketing?','No. Review Standard for ticketing, Professional for the asset requirement and Enterprise for broader workflows. Confirm the current edition matrix.'],['Does the product provide the people answering tickets?','No. Assign your own team or separately agree helpdesk services and coverage.']],
+    alternatives:['manageengine-opmanager','manageengine-endpoint-central'],
+    alternativeNote:'Monitoring and endpoint administration can supply work to a service desk. They do not replace ticket ownership and request workflow.'
+  },
+  {
+    id:'commvault-backup-recovery', partner:'commvault', index:0, pdf:'commvault-backup-recovery',
+    name:'Commvault Cloud Backup & Recovery',
+    intro:'Commvault Cloud Backup & Recovery is an option for protecting a mixed estate of applications, virtual machines, databases and files. Start with which services must recover first, the acceptable data loss and the destination where recovery needs to work.',
+    problems:['Different workload backup arrangements that are difficult to validate together.', 'Backups completing without evidence that priority applications can be restored.'],
+    suitable:'Consider it for a mixed on-premises and cloud estate where supported workloads and recovery dependencies can be inventoried.',
+    capabilities:['Backup and recovery across supported cloud and on-premises workloads.', 'Coverage for workload types such as virtual machines, databases and files.', 'Storage and deployment options to evaluate against the recovery design.'],
+    limitations:['Workload coverage is version- and configuration-dependent.', 'A successful backup job is not proof of a complete application recovery or a guaranteed recovery time.'],
+    how:['Register supported workloads and configure protection schedules and retention.', 'Maintain recoverable copies in the agreed storage design.', 'Restore selected data or workloads and test application dependencies in a controlled recovery exercise.'],
+    platform:'Verify application versions, hypervisors, storage and target recovery environments in the vendor support documentation.',
+    integration:'Plan permissions, identity dependencies, network access and coordination with application owners.',
+    licensing:'Confirm capacity, workload or other applicable metrics and include storage, infrastructure and optional services.',
+    budget:'Protected data and growth, retention, storage locations, workload scope and restore testing.',
+    evaluate:'Recover a representative application and document measured data loss, recovery time and unresolved dependencies.',
+    faqs:[['Is backup the same as disaster recovery?','Backup supplies recoverable copies. Disaster recovery also needs a sequence, application dependencies, access and a usable recovery location.'],['Can we keep existing storage?','Evaluate the supported storage options and recovery performance; compatibility and capacity need confirmation.']],
+    alternatives:['druva-hybrid-cloud-backup','commvault-saas-backup']
+  },
+  {
+    id:'commvault-saas-backup', partner:'commvault', index:1, pdf:'commvault-backup-recovery',
+    name:'Commvault SaaS Backup',
+    references:[['Commvault Microsoft 365 backup documentation','https://documentation.commvault.com/saas/backup_and_recovery_for_microsoft_365_apps.html'],['Commvault Backup & Recovery','https://www.commvault.com/platform/backup-and-recovery']],
+    intro:'Commvault SaaS backup addresses recovery of business data inside supported cloud applications. For Microsoft 365, focus on which services and objects must be recoverable, who may restore them and whether the retention policy meets your business need.',
+    problems:['Deleted or altered SaaS data that must be recovered beyond the normal working process.', 'Unclear responsibility for protection of cloud-application content.'],
+    suitable:'Consider it for SaaS administrators who can define protected tenants, users, application data and restore permissions.',
+    capabilities:['Microsoft 365 backup coverage for documented services.', 'Protection of Exchange, OneDrive, SharePoint and Teams data subject to the documented scope.', 'Application-specific restore workflows in Commvault SaaS.'],
+    limitations:['SaaS application APIs, permissions and object support constrain coverage and recovery.', 'This page does not imply that every SaaS application or object is protected by one entitlement.'],
+    how:['Authorize access to the supported tenant and select data for protection.', 'Apply the agreed backup and retention policies.', 'Use the documented application restore workflow and validate recovered objects with their owner.'],
+    platform:'Check the specific SaaS service, tenant prerequisites and supported object types, not desktop OS compatibility alone.',
+    integration:'Review tenant consent, service identities, administrative permissions and recovery destinations.',
+    licensing:'Confirm covered applications, users or the applicable metric, retention and any optional storage tier.',
+    budget:'Protected users and applications, retained data, growth, selected service and recovery requirements.',
+    evaluate:'Test recovery of representative mail and collaboration content with permitted administrators.',
+    faqs:[['Does cloud hosting remove the need to plan backup?','No. Establish recovery and retention requirements and compare them with native application recovery before adding protection.'],['Is the PDF dedicated to SaaS backup?','The optional ITSIPL guide also discusses business workload backup. This HTML page focuses on the distinct SaaS recovery requirement.']],
+    alternatives:['druva-saas-endpoint-backup','commvault-backup-recovery']
+  },
+  {
+    id:'druva-saas-endpoint-backup', partner:'druva', index:0, pdf:'druva-backup-resilience',
+    name:'Druva SaaS & Endpoint Backup',
+    references:[['Druva SaaS application backup','https://www.druva.com/use-cases/saas-apps/productivity'],['Druva endpoint backup','https://www.druva.com/use-cases/ai-resilience/endpoints']],
+    intro:'Druva provides cloud-delivered protection options for SaaS application content and end-user device data. This offering is relevant when the information to recover lives in employee files or collaboration services, rather than a server application that must be restarted.',
+    problems:['Lost employee files or collaboration content requiring recoverable copies.', 'Distributed users whose data is not consistently included in existing backup.'],
+    suitable:'Consider it when cloud delivery fits the data-location policy and the end-user or SaaS restore requirement is clearly defined.',
+    capabilities:['Backup and recovery options for supported SaaS application data.', 'Endpoint-data backup and restore.', 'Cloud-delivered administration of the selected protection scope.'],
+    limitations:['SaaS and endpoint coverage require their own eligibility and entitlement checks.', 'Device backup and restore depend on connectivity, data selection and available transfer time.'],
+    how:['Connect eligible SaaS tenants or enroll supported endpoint protection.', 'Select data and apply the agreed retention policy.', 'Restore representative content and verify it with the user or application owner.'],
+    platform:'Check exact SaaS service and object coverage alongside endpoint OS versions and file-selection behaviour.',
+    integration:'Review tenant permissions, device access, identity and the data regions allowed by your organization.',
+    licensing:'Specify SaaS and endpoint scope separately with the applicable user, device or consumption metric.',
+    budget:'Users or endpoints, data growth, retention, subscription scope, bandwidth and rollout work.',
+    evaluate:'Measure initial device backup and a representative file or SaaS-object restore over actual connections.',
+    faqs:[['Are SaaS backup and endpoint backup interchangeable?','No. One protects application content and the other protects selected device data. Choose one or both according to where the recoverable information resides.'],['Will cloud backup work well over every connection?','Measure upload and restore times against the available bandwidth and user locations before setting recovery expectations.']],
+    alternatives:['commvault-saas-backup','druva-hybrid-cloud-backup']
+  },
+  {
+    id:'druva-hybrid-cloud-backup', partner:'druva', index:1, pdf:'druva-backup-resilience',
+    name:'Druva Hybrid & Cloud Backup',
+    references:[['Druva data-center and hybrid backup','https://www.druva.com/use-cases/data-center'],['Druva platform overview','https://www.druva.com/products/resilience-cloud/platform-overview']],
+    intro:'Druva hybrid and cloud backup is an option for a team protecting supported data-centre and cloud workloads through a SaaS delivery model. Compare that model with your existing backup infrastructure, recovery location, network capacity and data-residency requirements.',
+    problems:['Backup infrastructure that takes too much ongoing administration.', 'Workloads spanning data-centre and cloud environments with inconsistent protection plans.'],
+    suitable:'Consider it when reducing self-managed backup infrastructure is valuable and a cloud recovery design fits your workloads.',
+    capabilities:['Cloud-delivered backup and recovery for supported data-centre workloads.', 'Protection options for supported cloud workloads.', 'Policy-based retention within the SaaS protection platform.'],
+    limitations:['Cloud delivery does not remove workload compatibility or recovery dependency checks.', 'Restore transfer time and recovery destination can be as important as backup completion.'],
+    how:['Connect eligible workloads through the required deployment components.', 'Apply protection schedules and retention for each workload group.', 'Restore to an approved supported location and test application availability.'],
+    platform:'Verify hypervisor, database and public-cloud support for your exact versions and proposed recovery paths.',
+    integration:'Review workload credentials, cloud permissions, network access and identity dependencies.',
+    licensing:'Confirm workload or consumption metrics, commitment terms, storage region and optional recovery features.',
+    budget:'Protected workloads, data volume and growth, retention, commitments, connectivity and restore-related charges if applicable.',
+    evaluate:'Restore a priority workload and measure transfer time and application readiness, including dependent services.',
+    faqs:[['Does SaaS delivery mean there is no local configuration?','No. Supported workloads still need appropriate access, connectivity and any required deployment components.'],['How should we compare it with Commvault?','Use the same workloads, retention and restore scenario, then compare supported deployment models and the operational work each design leaves with your team.']],
+    alternatives:['commvault-backup-recovery','druva-saas-endpoint-backup']
+  },
+  {
+    id:'netskope-one-dlp', partner:'netskope', index:0, pdf:'netskope-one-dlp',
+    intro:'Netskope One DLP is an option when sensitive information moves through cloud applications, web activity and other supported channels. Start by mapping those paths and deciding which transfers are legitimate; channel coverage and the enforcement method determine the useful purchase scope.',
+    problems:['Sensitive files or text leaving through cloud and web workflows.', 'Separate data policies that are difficult to apply consistently across channels.'],
+    suitable:'Consider it when cloud and web data movement is central and the organization can assign owners for classification and exceptions.',
+    capabilities:['Sensitive-data discovery and classification.', 'DLP policies across supported cloud, web, email and endpoint channels.', 'Context-aware enforcement and incident follow-up workflows.'],
+    limitations:['A channel must be supported, deployed and licensed to be protected.', 'Classification needs testing; false positives and approved exceptions affect daily work.'],
+    how:['Connect or steer the selected data paths through supported enforcement.', 'Classifiers and context evaluate activity against the configured rules.', 'Review incidents, coach users where configured and tune controls before widening enforcement.'],
+    platform:'Check application, OS, file and device support for each proposed channel and deployment mode.',
+    integration:'Document identity, traffic steering, SaaS access and incident-management integration requirements.',
+    licensing:'Request named channels, users, components and the required entitlement rather than assuming one scope covers all data paths.',
+    budget:'Users, channels, subscription scope, endpoint rollout, steering changes and policy-review work.',
+    evaluate:'Pilot representative uploads and sensitive-data samples; check unmanaged-device paths and exception handling.',
+    faqs:[['Is every cloud application automatically inspected?','No. Check support, connection method and the activities the proposed deployment can inspect.'],['Does DLP restore lost files?','No. DLP evaluates data use and movement; backup and recovery address restoring unavailable data.']],
+    alternatives:['forcepoint-dlp','manageengine-endpoint-dlp-plus']
+  },
+  {
+    id:'netskope-one-private-access', partner:'netskope', index:1, pdf:'netskope-one-private-access',
+    intro:'Netskope One Private Access provides policy-based access to private applications. It is relevant when remote users need specific internal resources without an unnecessarily broad network-access design. Inventory applications and protocols before deciding how much of the existing access environment to replace.',
+    problems:['Remote access granting more reach than the user needs.', 'Private-application access that is difficult to align with user and device policy.'],
+    suitable:'Consider it when user groups and private applications can be mapped and their real workflows can be piloted.',
+    capabilities:['Zero trust access to private applications.', 'Agent-based and browser access options for supported use cases.', 'Access policies using identity and device context in supported deployments.'],
+    limitations:['Legacy protocols and unmanaged-device access need explicit validation.', 'Additional device intelligence, data protection and experience features require entitlement review.'],
+    how:['Publish eligible application access through the supported deployment design.', 'Authenticate users and evaluate the configured access policy.', 'Permit the approved application path and review access experience and exceptions.'],
+    platform:'Check clients, browser access, private application protocols and deployment components for your use cases.',
+    integration:'Review identity, application name resolution, hosting networks and the transition from existing VPN access.',
+    licensing:'Confirm users, application-access scope, components and any optional related security services.',
+    budget:'Users, subscription scope, application onboarding, client rollout and identity/network integration.',
+    evaluate:'Test critical applications from representative locations and device types, with a documented fallback.',
+    faqs:[['Can we replace the entire VPN immediately?','Pilot each required workflow first, including legacy applications and administrative access. Migrate only validated paths.'],['Is private access the same as full internet security?','No. Define whether you also need internet, SaaS or data-channel controls and quote those capabilities explicitly.']],
+    alternatives:['palo-alto-prisma-access']
+  },
+  {
+    id:'forcepoint-dlp', partner:'forcepoint', index:0, pdf:'forcepoint-dlp',
+    references:[['Forcepoint DLP documentation','https://help.forcepoint.com/docs/Tech_Pubs/DLP/DLP.html'],['Forcepoint DLP administrator help','https://help.forcepoint.com/dlp/10.4.0/dlphelp/index.html']],
+    intro:'Forcepoint DLP helps organizations define policy for sensitive information and monitor or control its movement. It is an option for a multi-channel data-protection requirement where business owners can specify which information needs protection and which transfers must remain permitted.',
+    problems:['Sensitive information moving without a consistent review and control process.', 'Endpoint and network leakage paths needing a coordinated policy design.'],
+    suitable:'Consider it when required channels are documented and there is a team to tune policies, review incidents and approve exceptions.',
+    capabilities:['Sensitive-data discovery and classification.', 'Policy-based monitoring and protection of supported data channels.', 'Incident management and documented integration options for related Forcepoint services.'],
+    limitations:['Channel coverage depends on components, deployment and subscription scope.', 'File support, size limits, OS and application compatibility are release-specific.'],
+    how:['Deploy required components and define sensitive-data classifiers.', 'Observe policy matches on supported channels and review business exceptions.', 'Enable agreed enforcement and assign incident follow-up to authorized reviewers.'],
+    platform:'Use the release-specific system, endpoint and file-support documentation for the selected design.',
+    integration:'Review directory, endpoint and network requirements. Confirm any email, SWG or CASB integration separately.',
+    licensing:'Specify protected users or endpoints, channels, components, term and integration entitlements.',
+    budget:'Protected population, channels, infrastructure, integration, classification tuning and ongoing review.',
+    evaluate:'Test sample files on the required channels, verify incident access and document exceptions before blocking.',
+    faqs:[['Does one policy protect every leakage path?','Only where the required enforcement components and licences are deployed. Map each channel and test it.'],['Can DLP guarantee regulatory compliance?','No. It can support a data-control process, but legal requirements, governance and operating evidence need their own review.']],
+    alternatives:['netskope-one-dlp','manageengine-endpoint-dlp-plus']
+  }
+];
+
+export const products = definitions.map(d=>{
+  const [need,name,summary,source]=partnerContent[d.partner].products[d.index];
+  const relatedSolutions=solutions.filter(s=>s.options.some(([p,i])=>p===d.partner&&i===d.index)).map(s=>s.id);
+  const primarySolution=relatedSolutions.find(id=>!['cybersecurity','it-infrastructure','managed-services'].includes(id))||relatedSolutions[0];
+  return {...d, name:d.name||name, need, summary, source, page:`product-${d.id}.html`, pdf:`assets/guides/${d.pdf}.pdf`, offeringKey:`${d.partner}/${d.index}`, solutions:relatedSolutions, primarySolution, references:d.references||[sources[source]], reviewDate:productReviewDate};
+});
+export const productDestinations = Object.freeze(Object.fromEntries(products.map(p=>[p.offeringKey,Object.freeze({id:p.id,page:p.page,pdf:p.pdf})])));
+export function productForOffering(partner,index) {
+  return products.find(p=>p.offeringKey===`${partner}/${index}`);
+}
+export function productById(id) {
+  const p=products.find(p=>p.id===id);
+  if(!p) throw new Error(`Unknown product ${id}`);
+  return p;
+}
+export function availableProductPdf(product) {
+  return product.pdf && fs.existsSync(new URL(product.pdf,import.meta.url)) ? product.pdf : null;
+}

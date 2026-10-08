@@ -1,0 +1,21 @@
+/* Windows reference the unchanged 1048 x 406 screenshot, not high-resolution originals. */
+.its-clients{--client-columns:6;--client-gap:14px;max-width:1200px;margin:auto;padding:56px 20px;background:#fff;color:#1f2937}
+.its-clients h2{text-align:center;font-size:clamp(26px,4vw,36px);margin:0 0 30px}
+.its-client-grid{display:grid;grid-template-columns:repeat(var(--client-columns),minmax(0,1fr));gap:var(--client-gap);list-style:none;padding:8px 0 14px;margin:0}
+.its-clients.is-slider:not(.is-expanded) .its-client-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#c6c6c6 #f5f5f5}
+.its-client-card{display:flex;flex:0 0 calc((100% - (var(--client-columns) - 1)*var(--client-gap))/var(--client-columns));min-width:0;height:110px;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:10px;background:#fff;scroll-snap-align:start;transition:box-shadow 180ms ease}
+.its-client-card:hover{box-shadow:0 4px 10px #00000012}
+.its-client-logo{display:block;flex:none;width:var(--logo-width);height:var(--logo-height);background-image:url('../images/client-logos-source.png');background-repeat:no-repeat;background-size:1048px 406px;background-position:var(--logo-x) var(--logo-y)}
+.its-client-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:18px}
+.its-client-controls[hidden],.its-client-arrows[hidden]{display:none}
+.its-client-arrows{display:flex;align-items:center;gap:12px}
+.its-client-status{font-size:13px;text-align:center;min-width:112px}
+.its-client-controls button{min-width:44px;min-height:44px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#333;padding:8px 14px;font-weight:600}
+.its-client-controls .its-client-expand{background:#a81020;border-color:#a81020;color:#fff}
+.its-client-controls button:hover:not([aria-disabled=true]){border-color:#a81020;box-shadow:0 3px 8px #00000012}
+.its-client-controls button[aria-disabled=true]{color:#858585;cursor:default;background:#f5f5f5}
+.its-clients :is(button,ul):focus-visible{outline:3px solid #a81020;outline-offset:3px}
+@media(max-width:1000px){.its-clients{--client-columns:3}}
+@media(max-width:600px){.its-clients{--client-columns:2;--client-gap:10px;padding:36px 16px}}
+@media(max-width:279px){.its-clients{--client-columns:1}}
+@media(prefers-reduced-motion:reduce){.its-client-card{transition:none}}
